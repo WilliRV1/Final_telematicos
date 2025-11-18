@@ -1,0 +1,28 @@
+# Proyecto Final - Servicios Telemáticos
+
+**Universidad Autónoma de Occidente**  
+**Estudiante:** [Tu Nombre]  
+**Código:** [Tu Código]  
+**Grupo:** 51
+
+## Descripción
+
+Despliegue seguro de aplicación web con monitoreo usando:
+- Docker & Docker Compose
+- Nginx con HTTPS
+- Prometheus + Node Exporter
+- Grafana
+
+## Instrucciones de Ejecución
+
+Ver sección de despliegue local y AWS.
+
+## Métricas Monitoreadas
+
+1. **node_cpu_seconds_total**: Uso de CPU
+2. **node_memory_MemAvailable_bytes**: Memoria disponible
+3. **node_filesystem_avail_bytes**: Espacio en disco
+
+## Evidencias
+
+Ver carpeta `evidencias/capturas/`

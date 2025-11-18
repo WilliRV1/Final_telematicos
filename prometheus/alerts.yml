@@ -1,0 +1,53 @@
+groups:
+  - name: alertas_basicas_sistema
+    interval: 30s
+    rules:
+      - alert: CPUAlta
+        expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "CPU alta detectada en {{ $labels.instance }}"
+          description: "El uso de CPU está por encima del 80% durante 2 minutos (valor actual: {{ $value | humanize }}%)"
+
+      - alert: MemoriaBaja
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 20
+        for: 2m
+        labels:
+          severity: warning
+          category: memory
+        annotations:
+          summary: "Memoria disponible baja en {{ $labels.instance }}"
+          description: "Menos del 20% de memoria disponible ({{ $value | humanize }}% libre)"
+
+      - alert: DiscoLleno
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Espacio en disco crítico en {{ $labels.instance }}"
+          description: "Menos del 15% de espacio disponible en disco raíz ({{ $value | humanize }}% libre)"
+
+      - alert: InstanciaCaida
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Instancia {{ $labels.instance }} está caída"
+          description: "El job {{ $labels.job }} en {{ $labels.instance }} no responde"
+
+      - alert: AltoUsoDiscoIO
+        expr: rate(node_disk_io_time_seconds_total[1m]) > 0.8
+        for: 3m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "Alto uso de disco I/O en {{ $labels.instance }}"
+          description: "El disco está experimentando alta carga de I/O ({{ $value | humanize }})"

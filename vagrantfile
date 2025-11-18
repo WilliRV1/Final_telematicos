@@ -1,0 +1,87 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Base
+  config.vm.box = "ubuntu/jammy64"
+
+  # Puertos
+  config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 443, host: 8443
+  config.vm.network "forwarded_port", guest: 9090, host: 9090
+  config.vm.network "forwarded_port", guest: 9100, host: 9100
+  config.vm.network "forwarded_port", guest: 3000, host: 3000
+
+  # VirtualBox config
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "telematicos-final"
+    vb.memory = "2048"
+    vb.cpus = 2
+
+    # DNS Fix para NAT
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+  end
+
+  # Shared folder
+  config.vm.synced_folder ".", "/vagrant"
+
+  # PROVISIONER
+  config.vm.provision "shell", inline: <<-SHELL
+
+    echo "========== FIX DNS =========="
+
+    # Deshabilitar systemd-resolved
+    systemctl stop systemd-resolved || true
+    systemctl disable systemd-resolved || true
+
+    # Eliminar symlink roto
+    rm -f /etc/resolv.conf
+
+    # Crear resolv.conf permanente
+    bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+    bash -c 'echo "nameserver 1.1.1.1" >> /etc/resolv.conf'
+
+    # Proteger DNS para que no sea sobrescrito nunca
+    chattr +i /etc/resolv.conf
+
+    echo "DNS configurado correctamente."
+
+    echo "========== INSTALAR DEPENDENCIAS =========="
+
+    apt-get update -y
+    apt-get install -y curl wget git vim openssl ca-certificates gnupg lsb-release
+
+    echo "========== INSTALAR DOCKER =========="
+
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+
+    usermod -aG docker vagrant
+
+    echo "========== INSTALAR DOCKER COMPOSE =========="
+
+    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+      -o /usr/local/bin/docker-compose
+
+    chmod +x /usr/local/bin/docker-compose
+
+    echo ""
+    echo "Docker versión:"
+    docker --version
+
+    echo "Compose versión:"
+    docker-compose --version
+
+    echo "========== CONFIGURACIÓN COMPLETA =========="
+    echo "✔ DNS funcionando"
+    echo "✔ Docker listo"
+    echo "✔ Docker Compose listo"
+    echo "✔ Puedes iniciar los contenedores"
+    echo "----------------------------------------------"
+    echo "Para correrlos:"
+    echo "vagrant ssh"
+    echo "cd /vagrant/docker"
+    echo "sudo docker-compose up -d"
+  SHELL
+end

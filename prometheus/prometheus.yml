@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: 'prometheus-server'
+          environment: 'production'
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          instance: 'sistema-telematicos'
+          environment: 'production'
+
+  - job_name: 'webapp'
+    static_configs:
+      - targets: ['webapp:80']
+        labels:
+          instance: 'miniwebapp'
+          environment: 'production'
