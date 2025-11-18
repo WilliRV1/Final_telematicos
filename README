@@ -1,28 +1,131 @@
 # Proyecto Final - Servicios Telemáticos
 
 **Universidad Autónoma de Occidente**  
-**Estudiante:** [Tu Nombre]  
-**Código:** [Tu Código]  
-**Grupo:** 51
+**Estudiante:** William Reyes Valencia 
+**Código:** 2215773  
 
-## Descripción
 
-Despliegue seguro de aplicación web con monitoreo usando:
-- Docker & Docker Compose
-- Nginx con HTTPS
-- Prometheus + Node Exporter
-- Grafana
+##  Arquitectura
+```
+┌─────────────┐
+│   Usuario   │
+└──────┬──────┘
+       │ HTTPS (443)
+       ▼
+┌─────────────┐
+│   Nginx     │ ◄── Certificado SSL
+└──────┬──────┘
+       │ HTTP (5000)
+       ▼
+┌─────────────┐      ┌─────────────┐
+│   Flask     │◄────►│   MySQL     │
+└─────────────┘      └─────────────┘
+       │
+       │ Métricas
+       ▼
+┌─────────────┐      ┌─────────────┐
+│ Prometheus  │◄────►│Node Exporter│
+└──────┬──────┘      └─────────────┘
+       │
+       ▼
+┌─────────────┐
+│   Grafana   │
+└─────────────┘
+```
 
-## Instrucciones de Ejecución
+##  Instrucciones de Despliegue
 
-Ver sección de despliegue local y AWS.
 
-## Métricas Monitoreadas
+### Instalación 
+```bash
+# 1. Clonar el repositorio
+git clone [URL_DEL_REPO]
+cd proyecto-final-telematicos
 
-1. **node_cpu_seconds_total**: Uso de CPU
-2. **node_memory_MemAvailable_bytes**: Memoria disponible
-3. **node_filesystem_avail_bytes**: Espacio en disco
+# 2. Levantar la máquina virtual
+vagrant up
+
+# 3. Conectarse a la VM
+vagrant ssh
+
+# 4. Generar certificados SSL
+cd /vagrant/docker/nginx/ssl
+bash generate-ssl.sh
+
+# 5. Levantar los contenedores
+cd /vagrant/docker
+sudo docker-compose up -d
+
+# 6. Verificar que todo esté corriendo
+sudo docker ps
+```
+
+### Acceso a los Servicios
+
+| Servicio | URL | Credenciales |
+|----------|-----|--------------|
+| **Aplicación Web** | https://localhost:8443 | N/A |
+| **Grafana** | http://localhost:3000 | admin / admin123 |
+| **Prometheus** | http://localhost:9090 | N/A |
+
+## 📊 Métricas Monitoreadas
+
+### 1. **node_cpu_seconds_total**
+- **Descripción**: Tiempo de CPU por modo (idle, user, system)
+- **Uso**: Detectar alto uso de CPU
+- **Alerta**: CPU > 80% por 2 minutos
+
+### 2. **node_memory_MemAvailable_bytes**
+- **Descripción**: Memoria RAM disponible
+- **Uso**: Monitorear disponibilidad de memoria
+- **Alerta**: Memoria disponible < 20%
+
+### 3. **node_filesystem_avail_bytes**
+- **Descripción**: Espacio disponible en disco
+- **Uso**: Prevenir llenado de disco
+- **Alerta**: Espacio libre < 15%
+
+## Configuración
+
+### Docker Compose
+
+Los servicios están orquestados con `docker-compose.yml`:
+
+- **mysql**: Base de datos con healthcheck
+- **webapp**: Aplicación Flask con espera a MySQL
+- **nginx**: Proxy reverso con SSL/TLS
+- **prometheus**: Servidor de métricas
+- **node-exporter**: Exportador de métricas del sistema
+- **grafana**: Dashboard de visualización
+
+### Nginx
+
+Configuración en `docker/nginx/nginx.conf`:
+
+- Redirección HTTP → HTTPS
+- TLS 1.2 y 1.3
+- Headers de seguridad (HSTS, X-Frame-Options, etc.)
+- Proxy pass a Flask
+
+### Prometheus
+
+Scrape configs en `prometheus/prometheus.yml`:
+
+- **Intervalo**: 15 segundos
+- **Targets**: Prometheus, Node Exporter, WebApp
+- **Alertas**: CPU, Memoria, Disco, Disponibilidad
+
+
 
 ## Evidencias
 
-Ver carpeta `evidencias/capturas/`
+Ver carpeta `evidencias/capturas/` 
+
+
+## Referencias
+
+- [Docker Documentation](https://docs.docker.com/)
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Flask Documentation](https://flask.palletsprojects.com/)
+- [Nginx Documentation](https://nginx.org/en/docs/)

@@ -1,0 +1,36 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    build-essential \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar desde la ubicación CORRECTA
+COPY docker/MiniWebApp/webapp/ /app/
+
+# Sobrescribir config.py con variables de entorno
+RUN echo 'import os\n\
+\n\
+class Config:\n\
+    MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")\n\
+    MYSQL_USER = os.getenv("MYSQL_USER", "root")\n\
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "root")\n\
+    MYSQL_DB = os.getenv("MYSQL_DB", "myflaskapp")\n\
+    SQLALCHEMY_DATABASE_URI = f"mysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DB}"\n\
+    SQLALCHEMY_TRACK_MODIFICATIONS = False' > /app/config.py
+
+RUN pip install --no-cache-dir \
+    Flask==2.3.3 \
+    flask-cors \
+    Flask-MySQLdb \
+    Flask-SQLAlchemy
+
+EXPOSE 5000
+
+ENV FLASK_APP=run.py
+ENV FLASK_ENV=production
+
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0"]

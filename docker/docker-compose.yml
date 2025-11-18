@@ -1,14 +1,50 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: myflaskapp
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./MiniWebApp/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   webapp:
     build:
+      context: ..
+      dockerfile: docker/dockerfile-flask
+    container_name: flask-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=myflaskapp
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  nginx:
+    build:
       context: .
-      dockerfile: dockerfile
-    container_name: miniwebapp
+      dockerfile: dockerfile-nginx
+    container_name: nginx-proxy
+    depends_on:
+      - webapp
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ../MiniWebApp:/usr/share/nginx/html:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
@@ -68,5 +104,6 @@ networks:
   monitoring:
 
 volumes:
+  mysql_data:
   prometheus_data:
   grafana_data:
