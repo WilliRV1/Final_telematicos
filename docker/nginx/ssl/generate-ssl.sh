@@ -12,6 +12,5 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 chmod 644 docker/nginx/ssl/localhost.crt
 chmod 600 docker/nginx/ssl/localhost.key
 
-echo "✅ Certificados SSL generados exitosamente"
 echo "   - localhost.crt"
 echo "   - localhost.key"

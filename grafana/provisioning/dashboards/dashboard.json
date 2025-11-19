@@ -80,15 +80,16 @@
       "id": 3,
       "options": {
         "orientation": "auto",
-        "showThresholdMarkers": true
+        "showThresholdMarkers": true,
+        "showThresholdLabels": false
       },
       "targets": [
         {
           "expr": "(node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100",
-          "legendFormat": "Disco"
+          "legendFormat": "Disco Raíz"
         }
       ],
-      "title": "Espacio en Disco",
+      "title": "Espacio en Disco (%)",
       "type": "gauge"
     },
     {
@@ -97,7 +98,9 @@
         "defaults": {
           "color": {"mode": "palette-classic"},
           "custom": {
+            "axisPlacement": "auto",
             "drawStyle": "line",
+            "fillOpacity": 10,
             "lineWidth": 2
           },
           "unit": "Bps"
@@ -107,11 +110,11 @@
       "id": 4,
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total[5m])",
+          "expr": "rate(node_network_receive_bytes_total{device!~\"lo\"}[5m])",
           "legendFormat": "IN - {{device}}"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total[5m])",
+          "expr": "rate(node_network_transmit_bytes_total{device!~\"lo\"}[5m])",
           "legendFormat": "OUT - {{device}}"
         }
       ],
